@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — SITTA</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-panel-left">
+      <div class="login-left-mark">Universitas Terbuka &mdash; 2024</div>
+      <div class="login-left-title">Sistem Informasi<br><span>Tata Kelola</span><br>Bahan Ajar</div>
+      <p class="login-left-desc">Portal manajemen distribusi dan tracking bahan ajar mahasiswa Universitas Terbuka.</p>
+    </div>
+    <div class="login-panel-right">
+      <div class="login-form-wrap">
+        <div style="font-family:var(--mono);font-size:0.7rem;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:24px;">SITTA / Login</div>
+        <div class="login-form-title">Masuk ke Akun</div>
+        <div class="login-form-sub">Gunakan email dan password yang terdaftar</div>
+
+        <div class="alert alert-danger" id="alertError"></div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <div class="input-icon-wrap">
+            <i class="ti ti-mail input-icon"></i>
+            <input class="form-input has-icon" type="email" id="email" placeholder="email@ut.ac.id" autocomplete="email" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-icon-wrap">
+            <i class="ti ti-lock input-icon"></i>
+            <input class="form-input has-icon" type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-full" style="margin-top:4px;" onclick="handleLogin()">
+          <i class="ti ti-arrow-right"></i> Masuk
+        </button>
+
+        <div class="login-links">
+          <button onclick="openModal('modalLupa')"><i class="ti ti-key"></i> Lupa password?</button>
+          <button onclick="openModal('modalDaftar')"><i class="ti ti-user-plus"></i> Daftar akun</button>
+        </div>
+
+        <!-- hint akun demo -->
+        <div style="margin-top:24px;padding:12px;background:var(--navy-light);border-left:3px solid var(--navy-mid);font-size:0.72rem;color:var(--text-muted);">
+          <div style="font-weight:700;color:var(--navy);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;">Akun Demo</div>
+          <div style="font-family:var(--mono);line-height:1.9;">
+            rina@ut.ac.id / rina123<br>
+            agus@ut.ac.id / agus123<br>
+            admin@ut.ac.id / admin123
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Lupa Password -->
+  <div class="modal-overlay" id="modalLupa">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('modalLupa')"><i class="ti ti-x"></i></button>
+      <div class="modal-title"><i class="ti ti-key"></i> Reset Password</div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:16px;">Masukkan email terdaftar. Tautan reset akan dikirim ke inbox kamu.</p>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="lupaEmail" placeholder="email@ut.ac.id" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="handleLupaPassword()">
+        <i class="ti ti-send"></i> Kirim Tautan
+      </button>
+      <div class="alert" id="alertLupa" style="margin-top:12px;margin-bottom:0;"></div>
+    </div>
+  </div>
+
+  <!-- Modal Daftar -->
+  <div class="modal-overlay" id="modalDaftar">
+    <div class="modal-box" style="max-width:440px;">
+      <button class="modal-close" onclick="closeModal('modalDaftar')"><i class="ti ti-x"></i></button>
+      <div class="modal-title"><i class="ti ti-user-plus"></i> Buat Akun Baru</div>
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap</label>
+        <input class="form-input" type="text" id="daftarNama" placeholder="Nama sesuai KTP" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">NIM</label>
+        <input class="form-input" type="text" id="daftarNIM" placeholder="04XXXXXXX" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="daftarEmail" placeholder="email@ut.ac.id" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="daftarPassword" placeholder="Min. 8 karakter" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="handleDaftar()">
+        <i class="ti ti-check"></i> Buat Akun
+      </button>
+      <div class="alert" id="alertDaftar" style="margin-top:12px;margin-bottom:0;"></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+    function handleLogin() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const alertEl = document.getElementById('alertError');
+
+      if (!email || !password) {
+        showAlert(alertEl, 'Email dan password tidak boleh kosong.', 'danger');
+        return;
+      }
+
+      const user = dataPengguna.find(u => u.email === email && u.password === password);
+      if (!user) {
+        showAlert(alertEl, 'Email atau password yang Anda masukkan salah.', 'danger');
+        return;
+      }
+
+      sessionStorage.setItem('user', JSON.stringify(user));
+      window.location.href = 'dashboard.html';
+    }
+
+    function handleLupaPassword() {
+      const email = document.getElementById('lupaEmail').value.trim();
+      const el = document.getElementById('alertLupa');
+      if (!email) { showAlert(el, 'Email tidak boleh kosong.', 'danger'); return; }
+      showAlert(el, `Tautan reset dikirim ke ${email}.`, 'success');
+    }
+
+    function handleDaftar() {
+      const nama = document.getElementById('daftarNama').value.trim();
+      const nim = document.getElementById('daftarNIM').value.trim();
+      const email = document.getElementById('daftarEmail').value.trim();
+      const pw = document.getElementById('daftarPassword').value;
+      const el = document.getElementById('alertDaftar');
+      if (!nama || !nim || !email || !pw) { showAlert(el, 'Semua field wajib diisi.', 'danger'); return; }
+      if (pw.length < 8) { showAlert(el, 'Password minimal 8 karakter.', 'danger'); return; }
+      showAlert(el, 'Akun berhasil dibuat. Silakan login.', 'success');
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function showAlert(el, msg, type) { el.textContent = msg; el.className = `alert alert-${type} active`; }
+
+    document.querySelectorAll('.modal-overlay').forEach(o => {
+      o.addEventListener('click', e => { if (e.target === o) o.classList.remove('active'); });
+    });
+  </script>
+</body>
+</html>

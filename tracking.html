@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tracking Pengiriman — SITTA</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand"><span class="brand-mark">SITTA</span> Universitas Terbuka</div>
+    <div class="navbar-user">
+      <span id="navUser">—</span>
+      <button class="btn-logout" onclick="logout()"><i class="ti ti-logout"></i> Keluar</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="back-link" onclick="location.href='dashboard.html'">
+      <i class="ti ti-arrow-left"></i> Dashboard
+    </div>
+
+    <div class="page-header">
+      <h1><i class="ti ti-truck-delivery" style="color:var(--navy-mid);"></i> Tracking Pengiriman</h1>
+      <p>Lacak status Delivery Order bahan ajar</p>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title"><i class="ti ti-search"></i> Cari Nomor DO</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div class="input-icon-wrap" style="flex:1;min-width:200px;">
+          <i class="ti ti-hash input-icon"></i>
+          <input class="form-input has-icon" type="text" id="inputDO" placeholder="Contoh: 2023001234" />
+        </div>
+        <button class="btn btn-primary" onclick="cariDO()"><i class="ti ti-search"></i> Cari</button>
+        <button class="btn btn-outline" onclick="resetTracking()"><i class="ti ti-x"></i> Reset</button>
+      </div>
+      <p style="font-size:0.72rem;color:var(--text-muted);margin-top:10px;font-family:var(--mono);">
+        Contoh: 2023001234 &nbsp;·&nbsp; 2023005678
+      </p>
+    </div>
+
+    <div id="trackingResult"></div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    const userStr = sessionStorage.getItem('user');
+    if (!userStr) location.href = 'index.html';
+    document.getElementById('navUser').textContent = JSON.parse(userStr).nama;
+
+    document.getElementById('inputDO').addEventListener('keydown', e => { if (e.key === 'Enter') cariDO(); });
+
+    function cariDO() {
+      const noDO = document.getElementById('inputDO').value.trim();
+      const result = document.getElementById('trackingResult');
+
+      if (!noDO) {
+        result.innerHTML = `<div class="card"><div class="empty-state"><i class="ti ti-clipboard empty-icon"></i>Masukkan nomor DO terlebih dahulu.</div></div>`;
+        return;
+      }
+
+      const data = dataTracking[noDO];
+      if (!data) {
+        result.innerHTML = `<div class="card"><div class="empty-state"><i class="ti ti-search-off empty-icon"></i>Nomor DO <strong>${noDO}</strong> tidak ditemukan.</div></div>`;
+        return;
+      }
+
+      const bc = data.status === 'Dikirim' ? 'badge-success' : 'badge-info';
+      const progress = data.status === 'Dikirim' ? 100 : Math.round((data.perjalanan.length / 6) * 75);
+      const barClass = progress === 100 ? 'done' : progress > 50 ? 'partial' : 'early';
+
+      const timeline = data.perjalanan.map((r, i) => `
+        <div class="timeline-item">
+          <div class="timeline-dot" style="${i === data.perjalanan.length - 1 && data.status === 'Dikirim' ? 'background:var(--green)' : ''}"></div>
+          <div>
+            <div class="timeline-date"><i class="ti ti-clock"></i> ${r.waktu}</div>
+            <div class="timeline-text">${r.keterangan}</div>
+          </div>
+        </div>`).join('');
+
+      result.innerHTML = `
+        <div class="card">
+          <div class="card-title">
+            <i class="ti ti-map-pin"></i> Hasil &mdash; <span style="font-family:var(--mono);font-weight:500;">${data.nomorDO}</span>
+            <span class="badge ${bc}" style="margin-left:auto;">${data.status}</span>
+          </div>
+
+          <div class="tracking-header">
+            <div class="tracking-stat"><div class="ts-label"><i class="ti ti-user"></i> Nama</div><div class="ts-value">${data.nama}</div></div>
+            <div class="tracking-stat"><div class="ts-label"><i class="ti ti-map-pin"></i> Paket / Lokasi</div><div class="ts-value" style="font-family:var(--mono);">${data.paket}</div></div>
+            <div class="tracking-stat"><div class="ts-label"><i class="ti ti-truck"></i> Ekspedisi</div><div class="ts-value">${data.ekspedisi}</div></div>
+            <div class="tracking-stat"><div class="ts-label"><i class="ti ti-calendar-event"></i> Tanggal Kirim</div><div class="ts-value" style="font-family:var(--mono);">${data.tanggalKirim}</div></div>
+            <div class="tracking-stat"><div class="ts-label"><i class="ti ti-coin"></i> Total</div><div class="ts-value">${data.total}</div></div>
+            <div class="tracking-stat"><div class="ts-label"><i class="ti ti-map-2"></i> Update Terakhir</div><div class="ts-value" style="font-family:var(--mono);font-size:0.78rem;">${data.perjalanan[data.perjalanan.length-1].waktu}</div></div>
+          </div>
+
+          <div style="margin-bottom:24px;">
+            <div style="display:flex;justify-content:space-between;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:6px;">
+              <span>Progress Pengiriman</span>
+              <span style="color:var(--navy);font-family:var(--mono);">${progress}%</span>
+            </div>
+            <div class="progress-wrap"><div class="progress-bar ${barClass}" style="width:${progress}%"></div></div>
+          </div>
+
+          <div class="section-label"><i class="ti ti-list-details"></i> Riwayat Perjalanan</div>
+          <div class="timeline">${timeline}</div>
+        </div>`;
+    }
+
+    function resetTracking() {
+      document.getElementById('inputDO').value = '';
+      document.getElementById('trackingResult').innerHTML = '';
+    }
+
+    function logout() { sessionStorage.clear(); location.href = 'index.html'; }
+  </script>
+</body>
+</html>

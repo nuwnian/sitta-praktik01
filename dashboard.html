@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — SITTA</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand"><span class="brand-mark">SITTA</span> Universitas Terbuka</div>
+    <div class="navbar-user">
+      <span id="navUser">—</span>
+      <span id="navRole" style="font-family:var(--mono);font-size:0.68rem;background:rgba(255,255,255,0.1);padding:2px 8px;"></span>
+      <button class="btn-logout" onclick="logout()"><i class="ti ti-logout"></i> Keluar</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="greeting-bar">
+      <div>
+        <h2 id="greetingText">Selamat datang</h2>
+        <p id="greetingName">—</p>
+      </div>
+      <div class="greeting-time" id="greetingTime">—</div>
+    </div>
+
+    <div class="section-label"><i class="ti ti-apps"></i> Menu Layanan</div>
+
+    <div class="nav-grid">
+      <button class="nav-item" onclick="location.href='stok.html'">
+        <i class="ti ti-books nav-icon"></i>
+        <span class="nav-label">Informasi Bahan Ajar</span>
+        <span class="nav-desc">Ketersediaan stok modul</span>
+      </button>
+      <button class="nav-item" onclick="location.href='tracking.html'">
+        <i class="ti ti-truck-delivery nav-icon"></i>
+        <span class="nav-label">Tracking Pengiriman</span>
+        <span class="nav-desc">Lacak status DO</span>
+      </button>
+      <button class="nav-item" onclick="openModal('modalLaporan')">
+        <i class="ti ti-chart-bar nav-icon"></i>
+        <span class="nav-label">Laporan</span>
+        <span class="nav-desc">Monitoring & rekap</span>
+      </button>
+      <button class="nav-item" onclick="openModal('modalHistori')">
+        <i class="ti ti-receipt nav-icon"></i>
+        <span class="nav-label">Histori Transaksi</span>
+        <span class="nav-desc">Riwayat pembelian</span>
+      </button>
+    </div>
+
+    <div class="section-label"><i class="ti ti-chart-dots"></i> Ringkasan</div>
+
+    <div class="stats-row">
+      <div class="stat-cell">
+        <div class="stat-label">Total Bahan Ajar</div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-sub">judul terdaftar</div>
+      </div>
+      <div class="stat-cell" style="border-left:1px solid var(--border);">
+        <div class="stat-label">DO Aktif</div>
+        <div class="stat-value" style="color:var(--amber);" id="statDO">—</div>
+        <div class="stat-sub">dalam pengiriman</div>
+      </div>
+      <div class="stat-cell" style="border-left:1px solid var(--border);">
+        <div class="stat-label">Terkirim</div>
+        <div class="stat-value" style="color:var(--green);" id="statTerkirim">—</div>
+        <div class="stat-sub">sudah diterima</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Laporan -->
+  <div class="modal-overlay" id="modalLaporan">
+    <div class="modal-box" style="max-width:420px;">
+      <button class="modal-close" onclick="closeModal('modalLaporan')"><i class="ti ti-x"></i></button>
+      <div class="modal-title"><i class="ti ti-chart-bar"></i> Laporan</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn btn-outline" style="justify-content:flex-start;" onclick="alert('Fitur dalam pengembangan.')">
+          <i class="ti ti-trending-up"></i> Monitoring Progress DO
+        </button>
+        <button class="btn btn-outline" style="justify-content:flex-start;" onclick="alert('Fitur dalam pengembangan.')">
+          <i class="ti ti-clipboard-data"></i> Rekap Bahan Ajar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Histori -->
+  <div class="modal-overlay" id="modalHistori">
+    <div class="modal-box" style="max-width:620px;">
+      <button class="modal-close" onclick="closeModal('modalHistori')"><i class="ti ti-x"></i></button>
+      <div class="modal-title"><i class="ti ti-receipt"></i> Histori Transaksi</div>
+      <div id="historiContent"></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    const userStr = sessionStorage.getItem('user');
+    if (!userStr) location.href = 'index.html';
+    const user = JSON.parse(userStr);
+
+    document.getElementById('navUser').textContent = user.nama;
+    document.getElementById('navRole').textContent = user.role;
+
+    const hour = new Date().getHours();
+    let greeting = 'Selamat Malam';
+    if (hour >= 5 && hour < 11) greeting = 'Selamat Pagi';
+    else if (hour >= 11 && hour < 15) greeting = 'Selamat Siang';
+    else if (hour >= 15 && hour < 19) greeting = 'Selamat Sore';
+
+    document.getElementById('greetingText').textContent = `${greeting}, ${user.nama}`;
+    document.getElementById('greetingName').textContent = `${user.role} · ${user.lokasi} · ${new Date().toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}`;
+    document.getElementById('greetingTime').textContent = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+
+    // Stats dari data
+    document.getElementById('statTotal').textContent = dataBahanAjar.length;
+    const doList = Object.values(dataTracking);
+    document.getElementById('statDO').textContent = doList.filter(d => d.status !== 'Dikirim').length;
+    document.getElementById('statTerkirim').textContent = doList.filter(d => d.status === 'Dikirim').length;
+
+    // Histori
+    function buildHistori() {
+      const el = document.getElementById('historiContent');
+      const rows = Object.values(dataTracking).map(d => {
+        const bc = d.status === 'Dikirim' ? 'badge-success' : 'badge-info';
+        return `<tr>
+          <td class="td-mono">${d.nomorDO}</td>
+          <td>${d.nama}</td>
+          <td>${d.ekspedisi}</td>
+          <td class="td-mono">${d.tanggalKirim}</td>
+          <td>${d.total}</td>
+          <td><span class="badge ${bc}">${d.status}</span></td>
+        </tr>`;
+      }).join('');
+      el.innerHTML = `<div class="table-wrap"><table>
+        <thead><tr><th>No DO</th><th>Nama</th><th>Ekspedisi</th><th>Tgl Kirim</th><th>Total</th><th>Status</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+    }
+    buildHistori();
+
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function logout() { sessionStorage.clear(); location.href = 'index.html'; }
+    document.querySelectorAll('.modal-overlay').forEach(o => {
+      o.addEventListener('click', e => { if (e.target === o) o.classList.remove('active'); });
+    });
+  </script>
+</body>
+</html>
